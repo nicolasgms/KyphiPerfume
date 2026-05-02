@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="fr" x-cloak x-data="perfumeApp()" :class="{ 'dark': darkMode }">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+  <title>Kyphi | Parfumerie</title>
+  <style>
+
+    /* ── TOKENS ── */
+    :root {
+      --gold:       #c9a84c;
+      --gold-lt:    #f0d070;
+      --gold-dim:   rgba(201,168,76,0.12);
+      --gold-glow:  rgba(201,168,76,0.22);
+      --rose:       rgba(248,180,200,0.6);
+      --teal:       rgba(78,205,196,0.7);
+      --bg:         #06070f;
+      --surface:    rgba(255,255,255,0.025);
+      --border:     rgba(201,168,76,0.1);
+      --text:       rgba(255,255,255,0.9);
+      --text-2:     rgba(255,255,255,0.42);
+      --sidebar-bg: rgba(6,7,15,0.55);
+    }
+    html.light {
+      --bg:         #f0ebe0;
+      --surface:    rgba(255,255,255,0.65);
+      --border:     rgba(160,120,40,0.18);
+      --text:       rgba(18,14,6,0.9);
+      --text-2:     rgba(18,14,6,0.42);
+      --sidebar-bg: rgba(240,235,224,0.7);
+      --gold-dim:   rgba(160,120,40,0.1);
+      --gold-glow:  rgba(160,120,40,0.2);
+    }
+
+    /* ── BASE ── */
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 16px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.5s, color 0.5s;
+    }
+
+    /* ── CANVAS BG (Three.js) ── */
+    #bg-canvas {
+      position: fixed; inset: 0;
+      z-index: 0; pointer-events: none;
+    }
+
+    /* ── AMBIENT ORBS ── */
+    .orb {
+      position: fixed; border-radius: 50%;
+      filter: blur(100px); pointer-events: none; z-index: 0;
+      animation: orb-drift 14s ease-in-out infinite;
+    }
+    .orb-a {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(201,168,76,.1) 0%, transparent 65%);
+      top: -250px; right: -200px; animation-delay: 0s;
+    }
+    .orb-b {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(78,205,196,.06) 0%, transparent 65%);
+      bottom: -150px; left: -100px; animation-delay: -5s;
+    }
+    .orb-c {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(248,180,200,.05) 0%, transparent 65%);
+      top: 45%; left: 38%; animation-delay: -9s;
+    }
+    @keyframes orb-drift {
+      0%,100% { transform: translate(0,0) scale(1); }
+      40%     { transform: translate(40px,-40px) scale(1.08); }
+      70%     { transform: translate(-25px, 25px) scale(.94); }
+    }
+
+    /* ── LAYOUT ── */
+    .shell { position: relative; z-index: 2; min-height: 100vh; display: flex; flex-direction: column; }
+    .body-row { display: flex; flex: 1; }
+
+    /* ── HEADER ── */
+    .header {
+      height: 68px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem;
+      position: sticky; top: 0; z-index: 60;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6,7,15,.72);
+      backdrop-filter: blur(24px);
+      transition: background 0.5s;
+    }
+    html.light .header { background: rgba(240,235,224,.82); }
+
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-weight: 900; font-style: italic;
+      font-size: 1.4rem; letter-spacing: -.02em;
+      color: var(--text);
+    }
+    .logo em { color: var(--gold); font-style: normal; }
+
+    .header-right { display: flex; align-items: center; gap: 1rem; }
+
+    .ref-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--text-2);
+    }
+
+    /* ── THEME BTN ── */
+    .btn-theme {
+      width: 38px; height: 38px; border-radius: 50%;
+      border: 1px solid var(--border);
+      background: transparent; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.05rem;
+      transition: border-color .3s, background .3s, transform .3s;
+    }
+    .btn-theme:hover { border-color: var(--gold); background: var(--gold-dim); transform: rotate(20deg); }
+
+    /* ── ADD BUTTON ── */
+    .btn-add {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; letter-spacing: .13em; text-transform: uppercase;
+      font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 22px; border-radius: 99px;
+      border: 1px solid var(--gold);
+      background: var(--gold); color: #06070f;
+      cursor: pointer;
+      box-shadow: 0 0 24px var(--gold-glow);
+      transition: transform .25s, box-shadow .25s, filter .25s;
+    }
+    .btn-add:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 36px var(--gold-glow);
+      filter: brightness(1.1);
+    }
+    .btn-add:active { transform: translateY(0); }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 290px; flex-shrink: 0;
+      padding: 2rem 1.5rem;
+      height: calc(100vh - 68px);
+      position: sticky; top: 68px;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--sidebar-bg);
+      backdrop-filter: blur(14px);
+      transition: background .5s;
+    }
+    .sidebar::-webkit-scrollbar { width: 2px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 99px; }
+
+    .sb-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.75rem;
+    }
+    .sb-title {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .22em; text-transform: uppercase; color: var(--gold);
+    }
+    .btn-reset {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--text-2); background: none; border: none; cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-reset:hover { color: #f87171; }
+
+    .sb-section { margin-bottom: 1.75rem; }
+    .sb-label {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--text-2); display: block; margin-bottom: .65rem;
+    }
+    .sb-divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+
+    .sb-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: .7rem 1rem;
+      font-family: 'Cormorant Garamond', serif; font-size: .95rem;
+      color: var(--text); outline: none;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .sb-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+    .sb-input::placeholder { color: var(--text-2); font-style: italic; }
+
+    .pill {
+      font-family: 'DM Mono', monospace; font-size: 8px;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 5px 11px; border-radius: 99px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--text-2);
+      cursor: pointer; transition: all .2s;
+    }
+    .pill:hover { border-color: var(--gold); color: var(--gold); }
+    .pill.on { background: var(--gold); border-color: var(--gold); color: #06070f; font-weight: 500; }
+
+    .cb-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 5px 6px; border-radius: 8px; cursor: pointer;
+      transition: background .2s;
+    }
+    .cb-row:hover { background: var(--gold-dim); }
+    .cb-row input { accent-color: var(--gold); }
+    .cb-row span { font-size: .88rem; color: var(--text); }
+
+    input[type="range"] { accent-color: var(--gold); width: 100%; }
+
+    /* ── MAIN ── */
+    main {
+      flex: 1; padding: 2.5rem;
+      display: flex; flex-direction: column;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ── SKELETON ── */
+    .skel {
+      height: 420px; border-radius: 28px;
+      background: linear-gradient(90deg, var(--surface) 25%, rgba(201,168,76,.05) 50%, var(--surface) 75%);
+      background-size: 200% 100%;
+      animation: skel-shim 1.6s infinite;
+    }
+    @keyframes skel-shim {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      backdrop-filter: blur(18px);
+      position: relative; overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
+      transition: box-shadow .4s, border-color .4s;
+      animation: card-in .65s cubic-bezier(.23,1,.32,1) both;
+      cursor: default;
+    }
+    .card:nth-child(1)  { animation-delay: .04s; }
+    .card:nth-child(2)  { animation-delay: .09s; }
+    .card:nth-child(3)  { animation-delay: .14s; }
+    .card:nth-child(4)  { animation-delay: .19s; }
+    .card:nth-child(5)  { animation-delay: .24s; }
+    .card:nth-child(6)  { animation-delay: .29s; }
+    .card:nth-child(7)  { animation-delay: .34s; }
+    .card:nth-child(8)  { animation-delay: .39s; }
+    .card:nth-child(n+9){ animation-delay: .44s; }
+
+    @keyframes card-in {
+      from { opacity:0; transform: perspective(1200px) rotateX(10deg) translateY(28px); }
+      to   { opacity:1; transform: perspective(1200px) rotateX(0deg)  translateY(0); }
+    }
+
+    /* Animated spin-border on hover */
+    .card::before {
+      content: '';
+      position: absolute; inset: -1px; border-radius: 29px;
+      background: conic-gradient(
+        from var(--rot),
+        transparent 0deg, transparent 200deg,
+        rgba(201,168,76,.55) 260deg, rgba(240,208,112,.8) 280deg,
+        transparent 320deg
+      );
+      z-index: 0; opacity: 0;
+      transition: opacity .4s;
+      animation: spin-border 2.5s linear infinite paused;
+    }
+    .card:hover::before { opacity: 1; animation-play-state: running; }
+    @keyframes spin-border { to { --rot: 360deg; } }
+
+    /* Shimmer sweep */
+    .card::after {
+      content: '';
+      position: absolute; inset: 0; border-radius: 28px;
+      background: linear-gradient(110deg, transparent 35%, rgba(201,168,76,.07) 50%, transparent 65%);
+      background-size: 200% 100%; background-position: 150% 0;
+      pointer-events: none; transition: background-position .8s ease;
+    }
+    .card:hover::after { background-position: -100% 0; }
+
+    .card:hover {
+      border-color: rgba(201,168,76,.3);
+      box-shadow:
+        0 32px 64px -16px rgba(0,0,0,.55),
+        0 0 0 1px rgba(201,168,76,.12),
+        inset 0 1px 0 rgba(255,255,255,.06);
+    }
+
+    /* Cursor-tracked glow spot */
+    .card-glow {
+      position: absolute; width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(201,168,76,.18) 0%, transparent 60%);
+      border-radius: 50%; pointer-events: none;
+      transform: translate(-50%,-50%);
+      opacity: 0; transition: opacity .4s;
+      z-index: 1;
+    }
+
+    .card-body { position: relative; z-index: 2; padding: 1.4rem; display: flex; flex-direction: column; height: 100%; }
+
+    /* IMAGE */
+    .card-img-wrap {
+      height: 190px; border-radius: 18px;
+      background: rgba(255,255,255,.03);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; margin-bottom: 1.2rem;
+      transform: translateZ(20px);
+      transition: transform .5s cubic-bezier(.23,1,.32,1);
+    }
+    html.light .card-img-wrap { background: rgba(0,0,0,.04); }
+    .card:hover .card-img-wrap { transform: translateZ(40px); }
+
+    .card-img-wrap img {
+      width: 100%; height: 100%; object-fit: contain;
+      padding: 1rem;
+      filter: drop-shadow(0 18px 28px rgba(0,0,0,.35));
+      transition: transform .7s cubic-bezier(.23,1,.32,1);
+    }
+    .card:hover .card-img-wrap img { transform: scale(1.09); }
+
+    .no-img { opacity: .18; }
+
+    /* CARD HEADER */
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .9rem; }
+    .card-maison {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .2em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 3px;
+    }
+    .card-name {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700; font-size: 1.15rem; line-height: 1.2;
+      color: var(--text); transition: color .3s;
+    }
+    .card:hover .card-name { color: var(--gold); }
+    .card-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600; font-size: 1.2rem; color: var(--text); display: block;
+    }
+    .card-ml {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      color: var(--text-2); letter-spacing: .08em; text-align: right;
+    }
+
+    /* PYRAMID */
+    .pyramid { flex: 1; margin-bottom: .8rem; }
+    .note-row {
+      padding-left: 11px; margin-bottom: 8px; position: relative;
+    }
+    .note-row::before {
+      content: ''; position: absolute;
+      left: 0; top: 0; bottom: 0; width: 2px; border-radius: 99px;
+    }
+    .nr-t::before { background: linear-gradient(180deg, #fde047, rgba(253,224,71,.2)); }
+    .nr-c::before { background: linear-gradient(180deg, #f472b6, rgba(244,114,182,.2)); }
+    .nr-f::before { background: linear-gradient(180deg, #818cf8, rgba(129,140,248,.2)); }
+    .note-label {
+      font-family: 'DM Mono', monospace; font-size: 8px;
+      letter-spacing: .15em; text-transform: uppercase; display: block; margin-bottom: 2px;
+    }
+    .nl-t { color: rgba(253,224,71,.85); }
+    .nl-c { color: rgba(244,114,182,.85); }
+    .nl-f { color: rgba(129,140,248,.85); }
+    .note-vals { font-size: .8rem; color: var(--text-2); font-style: italic; line-height: 1.4; }
+
+    /* CARD FOOTER */
+    .card-foot {
+      margin-top: auto; padding-top: .9rem;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tag {
+      font-family: 'DM Mono', monospace; font-size: 8px;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 4px 8px; border-radius: 99px;
+      background: var(--gold-dim); color: var(--gold);
+      border: 1px solid rgba(201,168,76,.18);
+    }
+    .card-actions {
+      display: flex; gap: 5px;
+      opacity: 0; transform: translateY(5px);
+      transition: all .3s ease;
+    }
+    .card:hover .card-actions { opacity: 1; transform: translateY(0); }
+    .act-btn {
+      width: 30px; height: 30px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      background: transparent; cursor: pointer; transition: all .2s;
+    }
+    .act-edit { color: var(--gold); }
+    .act-edit:hover { background: var(--gold); color: #06070f; border-color: var(--gold); }
+    .act-del  { color: rgba(248,113,113,.7); }
+    .act-del:hover  { background: rgba(248,113,113,.85); color: #fff; border-color: transparent; }
+
+    /* ── MODAL ── */
+    .modal-bg {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center; padding: 1rem;
+      background: rgba(4,5,10,.92); backdrop-filter: blur(22px);
+    }
+    .modal-box {
+      background: #0d0f1c;
+      border: 1px solid rgba(201,168,76,.22);
+      border-radius: 32px; width: 100%; max-width: 680px;
+      max-height: 90vh; overflow-y: auto;
+      padding: 3rem; position: relative;
+      box-shadow: 0 60px 120px rgba(0,0,0,.85), 0 0 0 1px rgba(201,168,76,.05);
+      animation: modal-in .55s cubic-bezier(.23,1,.32,1) both;
+    }
+    html.light .modal-box {
+      background: #fff;
+      border-color: rgba(160,120,40,.22);
+      box-shadow: 0 40px 80px rgba(0,0,0,.15);
+    }
+    @keyframes modal-in {
+      from { opacity:0; transform: perspective(1200px) rotateX(-18deg) translateY(50px) scale(.94); }
+      to   { opacity:1; transform: perspective(1200px) rotateX(0deg)   translateY(0)    scale(1); }
+    }
+    .modal-box::-webkit-scrollbar { width: 2px; }
+    .modal-box::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 99px; }
+
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700; font-style: italic;
+      font-size: 2rem; color: var(--text); margin-bottom: 2rem;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+    .span2 { grid-column: span 2; }
+    .form-label {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: .15em; text-transform: uppercase;
+      color: var(--text-2); display: block; margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 13px 15px;
+      font-family: 'Cormorant Garamond', serif; font-size: 1rem;
+      color: var(--text); outline: none; transition: all .3s;
+    }
+    .form-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px var(--gold-dim); }
+    .form-input::placeholder { color: var(--text-2); font-style: italic; }
+
+    .shop-check {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 11px; border-radius: 11px;
+      border: 1px solid var(--border);
+      cursor: pointer; transition: all .2s;
+      font-family: 'DM Mono', monospace; font-size: 8px;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--text-2);
+    }
+    .shop-check:hover { border-color: var(--gold); color: var(--gold); }
+    .shop-check input { accent-color: var(--gold); }
+
+    .form-footer {
+      display: flex; justify-content: flex-end; gap: 1rem;
+      margin-top: 1.5rem; padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      grid-column: span 2;
+    }
+    .btn-cancel {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-2); background: none; border: none; cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-cancel:hover { color: #f87171; }
+
+    .btn-save {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      letter-spacing: .12em; text-transform: uppercase; font-weight: 500;
+      padding: 12px 28px; border-radius: 12px;
+      background: var(--gold); color: #06070f;
+      border: none; cursor: pointer;
+      box-shadow: 0 0 20px var(--gold-glow);
+      transition: transform .2s, box-shadow .2s, filter .2s;
+    }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 28px var(--gold-glow); filter: brightness(1.08); }
+
+    /* ── CURSOR DOT ── */
+    #cdot {
+      position: fixed; width: 7px; height: 7px;
+      background: var(--gold); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      mix-blend-mode: screen;
+      transition: transform .12s ease, opacity .3s;
+      transform: translate(-50%, -50%);
+    }
+    #cdot-ring {
+      position: fixed; width: 28px; height: 28px;
+      border: 1px solid rgba(201,168,76,.4); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: width .4s, height .4s, border-color .4s;
+    }
+    body:has(.card:hover) #cdot-ring { 
+        width: 48px; height: 48px; border-color: rgba(201,168,76,.7); 
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Three.js canvas -->
+  <canvas id="bg-canvas"></canvas>
+  <!-- Ambient orbs -->
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <!-- Custom cursor -->
+  <div id="cdot"></div>
+  <div id="cdot-ring"></div>
+
+  <div class="shell">
+    <!-- ── HEADER ── -->
+    <header class="header">
+      <div class="logo">KYPHI<em>.</em></div>
+      <div class="header-right">
+        <button @click="toggleTheme()" class="btn-theme">
+          <span x-show="!darkMode">🌙</span>
+          <span x-show="darkMode">☀️</span>
+        </button>
+        <span class="ref-badge" x-text="filteredParfums.length + ' références'"></span>
+        <button @click="openAddModal()" class="btn-add">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+          Nouvelle Fragrance
+        </button>
+      </div>
+    </header>
+
+    <div class="body-row">
+      <!-- ── SIDEBAR ── -->
+      <aside class="sidebar">
+        <div class="sb-head">
+          <span class="sb-title">Filtres</span>
+          <button @click="resetFilters()" class="btn-reset">Effacer</button>
+        </div>
+
+        <div class="sb-section">
+          <span class="sb-label">Recherche</span>
+          <input type="text" x-model="search" placeholder="Nom, note, maison…" class="sb-input">
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-section">
+          <span class="sb-label">Maisons</span>
+          <div style="max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;">
+            <template x-for="m in uniqueMaisons" :key="m">
+              <label class="cb-row">
+                <input type="checkbox" :value="m" x-model="selectedMaisons">
+                <span x-text="m"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-section">
+          <span class="sb-label">Disponibilités</span>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            <template x-for="shop in shopsList">
+              <button @click="toggleShop(shop)" :class="selectedShops.includes(shop) ? 'pill on' : 'pill'" x-text="shop"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-section">
+          <span class="sb-label">Saisons</span>
+          <div style="display:flex;flex-wrap:wrap;gap:5px;">
+            <template x-for="s in ['Eté','Printemps','Automne','Hiver','Toutes']">
+              <button @click="toggleSaison(s)" :class="selectedSaisons.includes(s) ? 'pill on' : 'pill'" x-text="s"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="sb-divider"></div>
+
+        <div class="sb-section">
+          <span class="sb-label">Prix max — <em style="color:var(--gold);font-style:normal;" x-text="maxPrix + ' €'"></em></span>
+          <input type="range" x-model="maxPrix" min="0" max="1000">
+        </div>
+      </aside>
+
+      <!-- ── MAIN ── -->
+      <main>
+        <!-- Skeletons -->
+        <div x-show="loading" class="grid-cards">
+          <template x-for="i in [1,2,3,4,5,6]"><div class="skel"></div></template>
+        </div>
+
+        <!-- Cards -->
+        <div x-show="!loading" class="grid-cards">
+          <template x-for="p in filteredParfums" :key="p.id">
+            <div class="card"
+              @mousemove="tiltCard($el,$event)"
+              @mouseleave="resetTilt($el)">
+              <div class="card-glow" style="position:absolute;width:220px;height:220px;background:radial-gradient(circle,rgba(201,168,76,.16) 0%,transparent 60%);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);opacity:0;transition:opacity .4s;z-index:1;"></div>
+
+              <div class="card-body">
+                <!-- Image -->
+                <div class="card-img-wrap">
+                  <template x-if="p.image_url">
+                    <img :src="p.image_url" :alt="p.reference">
+                  </template>
+                  <template x-if="!p.image_url">
+                    <div class="no-img">
+                      <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Header -->
+                <div class="card-top">
+                  <div>
+                    <p class="card-maison" x-text="p.maison"></p>
+                    <h3 class="card-name"  x-text="p.reference"></h3>
+                  </div>
+                  <div style="text-align:right;">
+                    <span class="card-price" x-text="p.prix + ' €'"></span>
+                    <span class="card-ml"    x-text="p.taille + ' ml'"></span>
+                  </div>
+                </div>
+
+                <!-- Pyramid -->
+                <div class="pyramid">
+                  <div x-show="p.notes_tete"  class="note-row nr-t">
+                    <span class="note-label nl-t">Tête</span>
+                    <p class="note-vals" x-text="p.notes_tete"></p>
+                  </div>
+                  <div x-show="p.notes_coeur" class="note-row nr-c">
+                    <span class="note-label nl-c">Cœur</span>
+                    <p class="note-vals" x-text="p.notes_coeur"></p>
+                  </div>
+                  <div x-show="p.notes_fond"  class="note-row nr-f">
+                    <span class="note-label nl-f">Fond</span>
+                    <p class="note-vals" x-text="p.notes_fond"></p>
+                  </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="card-foot">
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                    <template x-for="s in (p.saisons ? p.saisons.split(',') : [])">
+                      <span class="tag" x-text="s.trim()"></span>
+                    </template>
+                  </div>
+                  <div class="card-actions">
+                    <button @click.stop="editParfum(p)" class="act-btn act-edit">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                    </button>
+                    <button @click.stop="deleteParfum(p.id)" class="act-btn act-del">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div><!-- /card-body -->
+            </div>
+          </template>
+        </div>
+      </main>
+    </div><!-- /body-row -->
+  </div><!-- /shell -->
+
+  <!-- ── MODAL ── -->
+  <div x-show="showModal" x-cloak class="modal-bg"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0">
+    <div @click.away="showModal = false" class="modal-box">
+      <h2 class="modal-title" x-text="isEditing ? 'Modifier la référence' : 'Nouvelle Fragrance'"></h2>
+
+      <form @submit.prevent="saveParfum()" class="form-grid">
+        <div class="span2">
+          <label class="form-label">URL du flacon</label>
+          <input type="url" x-model="newP.image_url" placeholder="https://…" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Maison</label>
+          <input type="text" x-model="newP.maison" required class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Référence</label>
+          <input type="text" x-model="newP.reference" required class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Prix (€)</label>
+          <input type="number" x-model="newP.prix" class="form-input">
+        </div>
+        <div>
+          <label class="form-label">Contenance (ml)</label>
+          <input type="text" x-model="newP.taille" class="form-input">
+        </div>
+
+        <div class="span2">
+          <label class="form-label" style="color:var(--gold);margin-bottom:.75rem;">Pyramide Olfactive</label>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <input type="text" x-model="newP.tete"  placeholder="Notes de Tête — Bergamote, Citron…"   class="form-input">
+            <input type="text" x-model="newP.coeur" placeholder="Notes de Cœur — Rose, Jasmin…"         class="form-input">
+            <input type="text" x-model="newP.fond"  placeholder="Notes de Fond — Vétiver, Musc boisé…"  class="form-input">
+          </div>
+        </div>
+
+        <div class="span2">
+          <label class="form-label" style="color:rgba(78,205,196,.9);margin-bottom:.75rem;">Disponibilités</label>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">
+            <template x-for="shop in shopsList">
+              <label class="shop-check">
+                <input type="checkbox" :value="shop" x-model="tempShops">
+                <span x-text="shop"></span>
+              </label>
+            </template>
+          </div>
+        </div>
+
+        <div class="form-footer">
+          <button type="button" @click="showModal = false" class="btn-cancel">Annuler</button>
+          <button type="submit" class="btn-save" x-text="isEditing ? 'Mettre à jour' : 'Enregistrer'"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+  /* ── THREE.JS GOLD PARTICLE FIELD ── */
+  (function () {
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setSize(innerWidth, innerHeight);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 1000);
+    camera.position.z = 65;
+
+    /* Geometry */
+    const N   = 1800;
+    const pos = new Float32Array(N * 3);
+    const col = new Float32Array(N * 3);
+
+    for (let i = 0; i < N; i++) {
+      pos[i*3]   = (Math.random() - .5) * 220;
+      pos[i*3+1] = (Math.random() - .5) * 220;
+      pos[i*3+2] = (Math.random() - .5) * 110;
+      const t    = Math.random();
+      col[i*3]   = .68 + t * .32;
+      col[i*3+1] = .48 + t * .30;
+      col[i*3+2] = .08 + t * .28;
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 0.28, vertexColors: true,
+      transparent: true, opacity: 0.52,
+      sizeAttenuation: true,
+    });
+
+    const stars = new THREE.Points(geo, mat);
+    scene.add(stars);
+
+    /* Mouse parallax */
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', e => {
+      mx = (e.clientX / innerWidth  - .5);
+      my = (e.clientY / innerHeight - .5);
+    });
+
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    let t = 0;
+    (function loop() {
+      requestAnimationFrame(loop);
+      t += .0008;
+      stars.rotation.y = t * .04 + mx * .28;
+      stars.rotation.x = t * .015 + my * .18;
+      renderer.render(scene, camera);
+    })();
+  })();
+
+  /* ── CUSTOM CURSOR ── */
+  (function () {
+    const dot  = document.getElementById('cdot');
+    const ring = document.getElementById('cdot-ring');
+    let rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      dot.style.left  = e.clientX + 'px';
+      dot.style.top   = e.clientY + 'px';
+      // Smooth ring follow
+      rx += (e.clientX - rx) * .12;
+      ry += (e.clientY - ry) * .12;
+    });
+
+    (function lerp() {
+      requestAnimationFrame(lerp);
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+    })();
+  })();
+
+  /* ── ALPINE APP ── */
+  function perfumeApp() {
+    return {
+      parfums: [], loading: true,
+      darkMode: localStorage.getItem('theme') !== 'light',
+      search: '', selectedMaisons: [], selectedSaisons: [],
+      selectedShops: [], tempShops: [], maxPrix: 1000,
+      showModal: false, isEditing: false,
+      shopsList: ['Boutique Marque','Galeries Lafayette','La Samaritaine','Printemps','Jovoy','Odorare','Nose'],
+      newP: { maison:'', reference:'', prix:'', taille:'', image_url:'', tete:'', coeur:'', fond:'', dispo:'', saisons:'' },
+
+      init() { this.applyTheme(); this.fetchData(); },
+
+      toggleTheme() {
+        this.darkMode = !this.darkMode;
+        localStorage.setItem('theme', this.darkMode ? 'dark' : 'light');
+        this.applyTheme();
+      },
+      applyTheme() {
+        if (this.darkMode) document.documentElement.classList.remove('light');
+        else               document.documentElement.classList.add('light');
+      },
+
+      /* 3-D CARD TILT */
+      tiltCard(el, e) {
+        const r   = el.getBoundingClientRect();
+        const x   = e.clientX - r.left;
+        const y   = e.clientY - r.top;
+        const cx  = r.width  / 2;
+        const cy  = r.height / 2;
+        const rX  = ((y - cy) / cy) * -9;
+        const rY  = ((x - cx) / cx) *  9;
+        el.style.transform  = `perspective(1200px) rotateX(${rX}deg) rotateY(${rY}deg) scale3d(1.018,1.018,1.018)`;
+        el.style.transition = 'transform .05s ease';
+        const glow = el.querySelector('.card-glow');
+        if (glow) { glow.style.left = x+'px'; glow.style.top = y+'px'; glow.style.opacity = '1'; }
+      },
+      resetTilt(el) {
+        el.style.transform  = 'perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
+        el.style.transition = 'transform .9s cubic-bezier(.23,1,.32,1)';
+        const glow = el.querySelector('.card-glow');
+        if (glow) glow.style.opacity = '0';
+      },
+
+      async fetchData() {
+        this.loading = true;
+        try {
+          const res = await fetch('/api/parfums');
+          this.parfums = await res.json();
+        } catch (e) { console.error(e); }
+        finally { setTimeout(() => this.loading = false, 600); }
+      },
+
+      openAddModal() {
+        this.isEditing = false; this.tempShops = [];
+        this.newP = { maison:'', reference:'', prix:'', taille:'', image_url:'', tete:'', coeur:'', fond:'', dispo:'', saisons:'' };
+        this.showModal = true;
+      },
+      editParfum(p) {
+        this.isEditing = true;
+        this.newP = { id:p.id, maison:p.maison, reference:p.reference, prix:p.prix,
+          taille:p.taille, image_url:p.image_url||'',
+          tete:p.notes_tete||'', coeur:p.notes_coeur||'', fond:p.notes_fond||'', saisons:p.saisons||'' };
+        this.tempShops = p.dispo ? p.dispo.split(',').map(s=>s.trim()) : [];
+        this.showModal = true;
+      },
+      async saveParfum() {
+        this.newP.dispo = this.tempShops.join(', ');
+        const method = this.isEditing ? 'PUT' : 'POST';
+        const url    = this.isEditing ? `/api/parfums/${this.newP.id}` : '/api/parfums';
+        try {
+          const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(this.newP) });
+          if (res.ok) { this.showModal = false; await this.fetchData(); }
+        } catch (e) { console.error(e); }
+      },
+      async deleteParfum(id) {
+        if (confirm('Supprimer définitivement cette fragrance ?')) {
+          const res = await fetch(`/api/parfums/${id}`, { method:'DELETE' });
+          if (res.ok) this.fetchData();
+        }
+      },
+
+      get uniqueMaisons() {
+        return [...new Set(this.parfums.map(p=>p.maison))].filter(m=>m).sort();
+      },
+      toggleSaison(s) {
+        this.selectedSaisons = this.selectedSaisons.includes(s)
+          ? this.selectedSaisons.filter(x=>x!==s) : [...this.selectedSaisons, s];
+      },
+      toggleShop(shop) {
+        this.selectedShops = this.selectedShops.includes(shop)
+          ? this.selectedShops.filter(x=>x!==shop) : [...this.selectedShops, shop];
+      },
+      resetFilters() {
+        this.search=''; this.selectedMaisons=[]; this.selectedSaisons=[]; this.selectedShops=[]; this.maxPrix=1000;
+      },
+
+      get filteredParfums() {
+        return this.parfums.filter(p => {
+          const s    = this.search.toLowerCase().trim();
+          const pool = [p.reference, p.maison, p.notes_tete, p.notes_coeur, p.notes_fond]
+            .map(v => String(v||'').toLowerCase()).join(' ');
+          const matchSearch = s==='' || pool.includes(s);
+          const matchMaison = this.selectedMaisons.length===0 || this.selectedMaisons.includes(p.maison);
+          const matchPrix   = (p.prix||0) <= this.maxPrix;
+          const pShops      = p.dispo   ? p.dispo.split(',').map(x=>x.trim()) : [];
+          const matchShop   = this.selectedShops.length===0 || this.selectedShops.some(x=>pShops.includes(x));
+          const pSaisons    = p.saisons ? p.saisons.split(',').map(x=>x.trim()) : [];
+          const matchSaison = this.selectedSaisons.length===0 || this.selectedSaisons.some(x=>pSaisons.includes(x));
+          return matchSearch && matchMaison && matchPrix && matchShop && matchSaison;
+        });
+      }
+    }
+  }
+  </script>
+</body>
+</html>

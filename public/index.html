@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr" x-cloak x-data="perfumeApp()">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;1,600&family=Plus+Jakarta+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+    <title>KYPHI | Haute Parfumerie</title>
+    <style>
+        [x-cloak] { display: none !important; }
+        :root { --gold: #c5a059; --bg-dark: #080808; }
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #e5e5e5; 
+            overflow-x: hidden;
+        }
+        .serif { font-family: 'Cormorant Garamond', serif; }
+        .grain-bg { 
+            position: fixed; inset: 0; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); 
+            opacity: 0.02; pointer-events: none; z-index: 99; 
+        }
+        .obsidian-card { 
+            background: linear-gradient(145deg, #121212, #0a0a0a); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            transform-style: preserve-3d; 
+        }
+        .perspective-2000 { perspective: 2000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; position: absolute; inset: 0; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .bottle-depth { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); transform: translateZ(20px); }
+        .group:hover .bottle-depth { transform: translateZ(60px) scale(1.1); }
+        .gold-gradient { background: linear-gradient(to right, #c5a059, #f9e3b4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="grain-bg"></div>
+
+    <!-- HEADER -->
+    <header class="h-24 flex items-center px-6 sm:px-12 sticky top-0 bg-[#080808]/95 backdrop-blur-xl z-[60] justify-between border-b border-white/5">
+        <div class="flex items-center gap-4">
+            <!-- BOUTON MENU MOBILE -->
+            <button @click="mobileMenu = true" class="lg:hidden text-[#c5a059] p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+            <h1 class="serif text-2xl sm:text-3xl italic tracking-widest gold-gradient uppercase">Kyphi</h1>
+        </div>
+        
+        <div class="flex items-center gap-2 sm:gap-4">
+            <select x-model="sortBy" class="bg-transparent border border-white/10 text-[8px] sm:text-[10px] uppercase tracking-widest px-2 sm:px-4 py-2 outline-none focus:border-[#c5a059] text-white/60">
+                <option value="name_asc" class="bg-black">Nom (A-Z)</option>
+                <option value="price_asc" class="bg-black">Prix Croissant</option>
+                <option value="price_desc" class="bg-black">Prix Décroissant</option>
+            </select>
+            <button @click="openAddModal()" class="border border-[#c5a059]/30 hover:border-[#c5a059] px-4 sm:px-6 py-2 rounded-full text-[8px] sm:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-500 hover:bg-[#c5a059] hover:text-black">
+                + <span class="hidden sm:inline">Ajouter</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex">
+        <!-- SIDEBAR (DESKTOP + MOBILE OVERLAY) -->
+        <aside 
+            :class="mobileMenu ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+            class="fixed lg:sticky top-0 lg:top-24 left-0 w-80 p-10 h-screen lg:h-[calc(100vh-96px)] overflow-y-auto bg-[#080808] border-r border-white/5 custom-scrollbar z-[70] lg:z-50 transition-transform duration-500"
+        >
+            <!-- Bouton fermer mobile -->
+            <button @click="mobileMenu = false" class="lg:hidden absolute top-6 right-6 text-white/40">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+
+            <div class="mb-10 mt-8 lg:mt-0">
+                <label class="text-[9px] font-bold text-white/40 uppercase tracking-[0.3em] block mb-4">Recherche</label>
+                <input type="text" x-model="search" placeholder="Essence, Maison..." class="w-full bg-transparent border-b border-white/10 p-2 text-sm outline-none focus:border-[#c5a059] transition-colors">
+            </div>
+
+            <div class="mb-10">
+                <label class="text-[9px] font-bold text-white/40 uppercase tracking-[0.3em] block mb-6">Maison</label>
+                <div class="space-y-3 max-h-48 overflow-y-auto custom-scrollbar">
+                    <template x-for="m in uniqueMaisons" :key="m">
+                        <label class="flex items-center text-xs cursor-pointer group">
+                            <input type="checkbox" :value="m" x-model="selectedMaisons" class="hidden">
+                            <span class="w-3 h-3 rounded-full border border-white/20 mr-3 transition-all" :class="selectedMaisons.includes(m) ? 'bg-[#c5a059] border-[#c5a059]' : 'group-hover:border-[#c5a059]'"></span>
+                            <span :class="selectedMaisons.includes(m) ? 'text-white font-bold' : 'text-white/40'" x-text="m"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <label class="text-[9px] font-bold text-white/40 uppercase tracking-[0.3em] block mb-6">Disponibilité</label>
+                <div class="space-y-3">
+                    <template x-for="b in uniqueBoutiques" :key="b">
+                        <label class="flex items-center text-xs cursor-pointer group">
+                            <input type="checkbox" :value="b" x-model="selectedBoutiques" class="hidden">
+                            <span class="w-3 h-3 rounded-sm border border-white/20 mr-3 transition-all" :class="selectedBoutiques.includes(b) ? 'bg-[#c5a059] border-[#c5a059]' : 'group-hover:border-[#c5a059]'"></span>
+                            <span :class="selectedBoutiques.includes(b) ? 'text-white font-bold' : 'text-white/40'" x-text="b"></span>
+                        </label>
+                    </template>
+                </div>
+            </div>
+
+            <div class="mb-10">
+                <label class="text-[9px] font-bold text-white/40 uppercase tracking-[0.3em] block mb-6">Prix Maximum</label>
+                <input type="range" x-model="maxPrix" min="0" max="1000" class="w-full accent-[#c5a059]">
+                <div class="mt-2 text-[#c5a059] text-[10px] font-mono" x-text="maxPrix + '€'"></div>
+            </div>
+
+            <div class="mb-10">
+                <label class="flex items-center text-xs cursor-pointer group">
+                    <input type="checkbox" x-model="onlyFavorites" class="hidden">
+                    <span class="w-4 h-4 border border-[#c5a059]/50 mr-3 flex items-center justify-center transition-all" :class="onlyFavorites ? 'bg-[#c5a059]' : ''">
+                        <svg x-show="onlyFavorites" class="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                    <span class="text-[9px] font-bold uppercase tracking-[0.2em]" :class="onlyFavorites ? 'text-[#c5a059]' : 'text-white/40'">Mes Favoris</span>
+                </label>
+            </div>
+            <button @click="resetFilters()" class="text-[9px] uppercase tracking-widest text-white/20 hover:text-[#c5a059] transition-colors">Réinitialiser</button>
+        </aside>
+
+        <!-- OVERLAY MOBILE -->
+        <div x-show="mobileMenu" @click="mobileMenu = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] lg:hidden" x-transition.opacity></div>
+
+        <main class="flex-1 p-4 sm:p-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-12">
+                <template x-for="p in filteredParfums" :key="p.id">
+                    <div x-data="{ flipped: false }" class="relative h-[520px] sm:h-[580px] perspective-2000 group cursor-pointer" @click="flipped = !flipped">
+                        <div class="w-full h-full transition-transform duration-1000 transform-style-3d relative" :class="flipped ? 'rotate-y-180' : ''">
+                            
+                            <!-- FACE AVANT -->
+                            <div class="backface-hidden obsidian-card p-6 sm:p-8 flex flex-col justify-between z-10">
+                                <button @click.stop="toggleFavorite(p)" class="absolute top-4 right-4 z-20 transition-transform active:scale-125">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="p.is_favorite ? 'text-[#c5a059] fill-[#c5a059]' : 'text-white/20 fill-none'" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </button>
+                                <div class="relative h-64 sm:h-72 flex items-center justify-center transform-style-3d">
+                                    <div class="absolute inset-0 bg-[#c5a059]/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <img :src="p.image_url || 'https://via.placeholder.com/300x400'" class="max-w-full max-h-full object-contain bottle-depth drop-shadow-2xl">
+                                </div>
+                                
+                                <div class="space-y-3 transform-style-3d" style="transform: translateZ(30px)">
+                                    <p class="serif italic text-[#c5a059] text-lg sm:text-xl" x-text="p.maison"></p>
+                                    <h3 class="text-xl sm:text-2xl font-light tracking-widest text-white uppercase" x-text="p.reference"></h3>
+                                    
+                                    <div class="flex justify-between items-center text-[9px] tracking-[0.2em] text-white/40 uppercase">
+                                        <span x-text="p.taille ? p.taille + ' ML' : ''"></span>
+                                        <span class="serif italic text-2xl sm:text-3xl text-white" x-text="p.prix + '€'"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- FACE ARRIÈRE -->
+                            <div class="backface-hidden rotate-y-180 obsidian-card p-8 sm:p-10 flex flex-col border border-[#c5a059]/20 z-0">
+                                <div class="flex-1 space-y-6 overflow-y-auto custom-scrollbar pr-2 text-sm sm:text-base">
+                                    <div x-show="p.notes_tete">
+                                        <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Notes de Tête</label>
+                                        <p class="serif italic text-white/80" x-text="p.notes_tete"></p>
+                                    </div>
+                                    <div x-show="p.notes_coeur">
+                                        <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Notes de Cœur</label>
+                                        <p class="serif italic text-white/80" x-text="p.notes_coeur"></p>
+                                    </div>
+                                    <div x-show="p.notes_fond">
+                                        <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Notes de Fond</label>
+                                        <p class="serif italic text-white/80" x-text="p.notes_fond"></p>
+                                    </div>
+                                    <div x-show="p.dispo">
+                                        <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Points de vente</label>
+                                        <p class="text-xs text-white/60 leading-relaxed" x-text="p.dispo"></p>
+                                    </div>
+                                </div>
+                                <div class="pt-6 flex justify-between border-t border-white/5">
+                                    <button @click.stop="editParfum(p)" class="text-[9px] uppercase tracking-widest text-[#c5a059]">Modifier</button>
+                                    <button @click.stop="deleteParfum(p.id)" class="text-[9px] uppercase tracking-widest text-red-900">Supprimer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALE -->
+    <div x-show="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl" x-transition>
+        <div @click.away="showModal = false" class="w-full max-w-2xl bg-[#0a0a0a] border border-white/10 p-6 sm:p-12 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <h2 class="serif text-2xl sm:text-3xl italic gold-gradient mb-8" x-text="isEditing ? 'Éditer l\'essence' : 'Nouvelle création'"></h2>
+            <form @submit.prevent="saveParfum()" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest text-white/40">Maison</label>
+                        <input type="text" x-model="newP.maison" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest text-white/40">Nom</label>
+                        <input type="text" x-model="newP.reference" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest text-white/40">Prix (€)</label>
+                        <input type="number" x-model="newP.prix" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest text-white/40">Contenance (ml)</label>
+                        <input type="text" x-model="newP.taille" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase tracking-widest text-white/40">Points de vente</label>
+                        <input type="text" x-model="newP.dispo" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <input type="text" x-model="newP.notes_tete" placeholder="Notes de Tête" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
+                    <input type="text" x-model="newP.notes_coeur" placeholder="Notes de Cœur" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
+                    <input type="text" x-model="newP.notes_fond" placeholder="Notes de Fond" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
+                </div>
+
+                <input type="url" x-model="newP.image_url" placeholder="URL Image" class="w-full bg-transparent border-b border-white/10 py-2 outline-none">
+
+                <div class="pt-8 flex justify-end gap-6">
+                    <button type="button" @click="showModal = false" class="text-[10px] uppercase text-white/40">Annuler</button>
+                    <button type="submit" class="bg-[#c5a059] text-black px-10 py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function perfumeApp() {
+            return {
+                parfums: [],
+                search: '',
+                selectedMaisons: [],
+                selectedBoutiques: [],
+                maxPrix: 1000,
+                sortBy: 'name_asc',
+                showModal: false,
+                isEditing: false,
+                mobileMenu: false, // Variable pour le menu mobile
+                newP: { maison: '', reference: '', prix: '', taille: '', dispo: '', image_url: '', notes_tete: '', notes_coeur: '', notes_fond: '' },
+
+                async init() { await this.fetchData(); },
+
+                async fetchData() {
+                    const res = await fetch('/api/parfums');
+                    this.parfums = await res.json();
+                },
+
+                get uniqueMaisons() {
+                    return [...new Set(this.parfums.map(p => p.maison))].filter(Boolean).sort();
+                },
+
+                get uniqueBoutiques() {
+                    let all = [];
+                    this.parfums.forEach(p => {
+                        if(p.dispo) p.dispo.split(',').forEach(b => all.push(b.trim()));
+                    });
+                    return [...new Set(all)].filter(Boolean).sort();
+                },
+                onlyFavorites: false,
+//
+get filteredParfums() {
+    // 1. Filtrage
+    const filtered = this.parfums.filter(p => {
+        const s = this.search.toLowerCase();
+        const matchSearch = p.reference.toLowerCase().includes(s) || p.maison.toLowerCase().includes(s);
+        const matchFav = !this.onlyFavorites || p.is_favorite;
+        const matchMaison = this.selectedMaisons.length === 0 || this.selectedMaisons.includes(p.maison);
+        const matchBoutique = this.selectedBoutiques.length === 0 || this.selectedBoutiques.some(b => p.dispo?.includes(b));
+        const matchPrix = p.prix <= this.maxPrix;
+        
+        return matchSearch && matchFav && matchMaison && matchBoutique && matchPrix;
+    });
+
+    // 2. Tri (C'est ici qu'on trie le résultat filtré)
+    return filtered.sort((a, b) => {
+        if (this.sortBy === 'name_asc') return a.reference.localeCompare(b.reference);
+        if (this.sortBy === 'price_asc') return a.prix - b.prix;
+        if (this.sortBy === 'price_desc') return b.prix - a.prix;
+        return 0;
+    });
+},
+
+                openAddModal() {
+                    this.isEditing = false;
+                    this.newP = { maison: '', reference: '', prix: '', taille: '', dispo: '', image_url: '', notes_tete: '', notes_coeur: '', notes_fond: '' };
+                    this.showModal = true;
+                },
+
+                editParfum(p) {
+                    this.isEditing = true;
+                    this.newP = { ...p };
+                    this.showModal = true;
+                },
+
+                async saveParfum() {
+                    const payload = {
+                        ...this.newP,
+                        tete: this.newP.notes_tete,
+                        coeur: this.newP.notes_coeur,
+                        fond: this.newP.notes_fond
+                    };
+                    const method = this.isEditing ? 'PUT' : 'POST';
+                    const url = this.isEditing ? `/api/parfums/${this.newP.id}` : '/api/parfums';
+                    await fetch(url, {
+                        method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    this.showModal = false;
+                    this.fetchData();
+                },
+
+                async deleteParfum(id) {
+                    if(confirm('Supprimer définitivement ?')) {
+                        await fetch(`/api/parfums/${id}`, { method: 'DELETE' });
+                        this.fetchData();
+                    }
+                },
+
+                async toggleFavorite(p) {
+            try {
+                const res = await fetch(`/api/favoris/${p.id}`, { method: 'POST' });
+                const data = await res.json();
+                p.is_favorite = data.is_favorite; // Mise à jour réactive immédiate
+            } catch (err) {
+                console.error("Erreur favoris:", err);
+            }
+        },
+
+                resetFilters() {
+                    this.search = '';
+                    this.selectedMaisons = [];
+                    this.selectedBoutiques = [];
+                    this.maxPrix = 1000;
+                    this.onlyFavorites = false;
+                    this.sortBy = 'name_asc';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
