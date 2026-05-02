@@ -38,7 +38,7 @@ app.get('/api/parfums', async (req, res) => {
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id AND pn.type = 'tête'), '') as notes_tete,
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id AND pn.type = 'coeur'), '') as notes_coeur,
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id AND pn.type = 'fond'), '') as notes_fond,
-    COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id), '') as all_notes, -- AJOUT DE LA VIRGULE ICI
+    COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id), '') as all_notes,
     IF(f.id IS NULL, 0, 1) as is_favorite
     FROM parfums p
     LEFT JOIN maisons m ON p.maison_id = m.id
@@ -192,4 +192,6 @@ app.delete('/api/parfums/:id', async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log('ScentVault Backend : http://localhost:3000'));
+// Port dynamique pour Railway (utilise process.env.PORT)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`ScentVault Backend : http://localhost:${PORT}`));
