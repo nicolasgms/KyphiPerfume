@@ -40,7 +40,6 @@
 </head>
 <body class="min-h-screen">
     <div class="grain-bg"></div>
-
     <!-- HEADER -->
     <header class="h-24 flex items-center px-6 sm:px-12 sticky top-0 bg-[#080808]/95 backdrop-blur-xl z-[60] justify-between border-b border-white/5">
         <div class="flex items-center gap-4">
@@ -56,7 +55,7 @@
         <div class="flex items-center gap-2 sm:gap-4">
             <select x-model="sortBy" class="bg-transparent border border-white/10 text-[8px] sm:text-[10px] uppercase tracking-widest px-2 sm:px-4 py-2 outline-none focus:border-[#c5a059] text-white/60">
                 <option value="name_asc" class="bg-black">Nom (A-Z)</option>
-                <option value="price_asc" class="bg-black">Prix Croissant</option>
+                <option value="maison_asc" class="bg-black">Maison (A-Z)</option> <option value="maison_desc" class="bg-black">Maison (Z-A)</option> <option value="price_asc" class="bg-black">Prix Croissant</option>
                 <option value="price_desc" class="bg-black">Prix Décroissant</option>
             </select>
             <button @click="openAddModal()" class="border border-[#c5a059]/30 hover:border-[#c5a059] px-4 sm:px-6 py-2 rounded-full text-[8px] sm:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-500 hover:bg-[#c5a059] hover:text-black">
@@ -130,15 +129,18 @@
         <!-- OVERLAY MOBILE -->
         <div x-show="mobileMenu" @click="mobileMenu = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] lg:hidden" x-transition.opacity></div>
 
-        <main class="flex-1 p-4 sm:p-12">
+        <main class="flex-1 p-4 sm:p-12 relative">
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-12">
-                <template x-for="p in filteredParfums" :key="p.id">
-                    <div x-data="{ flipped: false }" class="relative h-[520px] sm:h-[580px] perspective-2000 group cursor-pointer" @click="flipped = !flipped">
+                <template x-for="(p, index) in filteredParfums" :key="p.id">
+                    <div 
+                        :id="isFirstOfLetter(p, index) ? 'letter-' + p.reference.charAt(0).toUpperCase() : null"
+                        x-data="{ flipped: false }" 
+                        class="relative h-[520px] sm:h-[580px] perspective-2000 group cursor-pointer" 
+                        @click="flipped = !flipped"
+                    >
                         <div class="w-full h-full transition-transform duration-1000 transform-style-3d relative" :class="flipped ? 'rotate-y-180' : ''">
                             
-                            <!-- FACE AVANT -->
                             <div class="backface-hidden obsidian-card p-6 sm:p-8 flex flex-col justify-between z-10">
-                                
                                 <div class="relative h-64 sm:h-72 flex items-center justify-center transform-style-3d">
                                     <div class="absolute inset-0 bg-[#c5a059]/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                     <img :src="p.image_url || 'https://via.placeholder.com/300x400'" class="max-w-full max-h-full object-contain bottle-depth drop-shadow-2xl">
@@ -147,15 +149,13 @@
                                 <div class="space-y-3 transform-style-3d" style="transform: translateZ(30px)">
                                     <p class="serif italic text-[#c5a059] text-lg sm:text-xl" x-text="p.maison"></p>
                                     <h3 class="text-xl sm:text-2xl font-light tracking-widest text-white uppercase" x-text="p.reference"></h3>
-                                    
                                     <div class="flex justify-between items-center text-[9px] tracking-[0.2em] text-white/40 uppercase">
                                         <span x-text="p.taille ? p.taille + ' ML' : ''"></span>
                                         <span class="serif italic text-2xl sm:text-3xl text-white" x-text="p.prix + '€'"></span>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- FACE ARRIÈRE -->
+        
                             <div class="backface-hidden rotate-y-180 obsidian-card p-8 sm:p-10 flex flex-col border border-[#c5a059]/20 z-0">
                                 <div class="flex-1 space-y-6 overflow-y-auto custom-scrollbar pr-2 text-sm sm:text-base">
                                     <div x-show="p.notes_tete">
@@ -184,6 +184,17 @@
                     </div>
                 </template>
             </div>
+        
+            <nav class="fixed right-2 sm:right-4 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 z-[100] select-none bg-black/20 backdrop-blur-md p-2 rounded-full">
+                <template x-for="letter in alphabet" :key="letter">
+                    <button 
+                        @click="scrollToLetter(letter)"
+                        class="text-[9px] font-bold w-5 h-5 flex items-center justify-center transition-all rounded-full"
+                        :class="availableLetters.includes(letter) ? 'text-[#c5a059] hover:bg-[#c5a059] hover:text-black' : 'text-white/5 pointer-events-none'"
+                        x-text="letter">
+                    </button>
+                </template>
+            </nav>
         </main>
     </div>
 
@@ -268,21 +279,32 @@
                 },
 
                 get filteredParfums() {
-                    let result = this.parfums.filter(p => {
-                        const s = this.search.toLowerCase();
-                        const matchSearch = p.reference.toLowerCase().includes(s) || p.maison.toLowerCase().includes(s);
-                        const matchMaison = this.selectedMaisons.length === 0 || this.selectedMaisons.includes(p.maison);
-                        const matchBoutique = this.selectedBoutiques.length === 0 || this.selectedBoutiques.some(b => p.dispo?.includes(b));
-                        const matchPrix = p.prix <= this.maxPrix;
-                        return matchSearch && matchMaison && matchBoutique && matchPrix;
-                    });
-                    return result.sort((a, b) => {
-                        if (this.sortBy === 'name_asc') return a.reference.localeCompare(b.reference);
-                        if (this.sortBy === 'price_asc') return a.prix - b.prix;
-                        if (this.sortBy === 'price_desc') return b.prix - a.prix;
-                        return 0;
-                    });
-                },
+    let result = this.parfums.filter(p => {
+        const s = this.search.toLowerCase();
+        const matchSearch = p.reference.toLowerCase().includes(s) || p.maison.toLowerCase().includes(s);
+        const matchMaison = this.selectedMaisons.length === 0 || this.selectedMaisons.includes(p.maison);
+        const matchBoutique = this.selectedBoutiques.length === 0 || this.selectedBoutiques.some(b => p.dispo?.includes(b));
+        const matchPrix = p.prix <= this.maxPrix;
+        return matchSearch && matchMaison && matchBoutique && matchPrix;
+    });
+
+    return result.sort((a, b) => {
+        if (this.sortBy === 'name_asc') return a.reference.localeCompare(b.reference);
+        
+        // Nouveaux tris par Maison
+        if (this.sortBy === 'maison_asc') {
+            // Si les maisons sont identiques, on trie par nom de parfum (reference)
+            return a.maison.localeCompare(b.maison) || a.reference.localeCompare(b.reference);
+        }
+        if (this.sortBy === 'maison_desc') {
+            return b.maison.localeCompare(a.maison) || a.reference.localeCompare(b.reference);
+        }
+
+        if (this.sortBy === 'price_asc') return a.prix - b.prix;
+        if (this.sortBy === 'price_desc') return b.prix - a.prix;
+        return 0;
+    });
+},
 
                 openAddModal() {
                     this.isEditing = false;
@@ -321,6 +343,35 @@
                     }
                 },
 
+                alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+
+        // Calcule les lettres qui ont au moins un parfum correspondant
+        get availableLetters() {
+            const field = (this.sortBy.includes('maison')) ? 'maison' : 'reference';
+            return [...new Set(this.filteredParfums.map(p => p[field].charAt(0).toUpperCase()))];
+        },
+
+        // Vérifie si c'est le premier parfum de cette lettre (pour poser l'ID)
+        isFirstOfLetter(p, index) {
+            if (index === 0) return true;
+            const prevP = this.filteredParfums[index - 1];
+            return p.reference.charAt(0).toUpperCase() !== prevP.reference.charAt(0).toUpperCase();
+        },
+
+        // Fonction de défilement fluide
+        scrollToLetter(letter) {
+            const el = document.getElementById('letter-' + letter);
+            if (el) {
+                const headerOffset = 120; // Ajustement pour le header fixe
+                const elementPosition = el.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        },
                 resetFilters() {
                     this.search = '';
                     this.selectedMaisons = [];
