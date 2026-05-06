@@ -25,8 +25,7 @@ async function getOrInsert(table, nom) {
  * ROUTES
  */
 
-// 1. RÉCUPÉRATION - CORRECTION : COALESCE pour éviter les NULL qui cassent la recherche JS
-// 1. RÉCUPÉRATION - FIX : Ajout de all_notes pour une recherche globale
+// 1. RÉCUPÉRATION
 app.get('/api/parfums', async (req, res) => {
     try {
         const sql = `
@@ -39,10 +38,12 @@ app.get('/api/parfums', async (req, res) => {
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id AND pn.type = 'coeur'), '') as notes_coeur,
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id AND pn.type = 'fond'), '') as notes_fond,
     COALESCE((SELECT GROUP_CONCAT(n.nom) FROM parfums_notes pn JOIN notes n ON pn.note_id = n.id WHERE pn.parfum_id = p.id), '') as all_notes,
-    IF(f.id IS NULL, 0, 1) as is_favorite
+    IF(fav.id IS NULL, 0, 1) as is_favorite,
+    IF(pos.id IS NULL, 0, 1) as is_owned
     FROM parfums p
     LEFT JOIN maisons m ON p.maison_id = m.id
-    LEFT JOIN favoris f ON p.id = f.parfum_id
+    LEFT JOIN favoris fav ON p.id = fav.parfum_id
+    LEFT JOIN possedes pos ON p.id = pos.parfum_id
     ORDER BY maison
 `;
         const [rows] = await pool.query(sql);
@@ -68,7 +69,23 @@ app.post('/api/favoris/:id', async (req, res) => {
     }
 });
 
-// 2. AJOUT (Garde ton image_url et tes relations)
+// Basculer l'état possédé (Toggle)
+app.post('/api/possedes/:id', async (req, res) => {
+    try {
+        const [existing] = await pool.execute('SELECT id FROM possedes WHERE parfum_id = ?', [req.params.id]);
+        if (existing.length > 0) {
+            await pool.execute('DELETE FROM possedes WHERE parfum_id = ?', [req.params.id]);
+            res.json({ is_owned: false });
+        } else {
+            await pool.execute('INSERT INTO possedes (parfum_id) VALUES (?)', [req.params.id]);
+            res.json({ is_owned: true });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. AJOUT
 app.post('/api/parfums', async (req, res) => {
     const { reference, maison, prix, taille, image_url, familles, saisons, tete, coeur, fond, dispo } = req.body;
     const conn = await pool.getConnection();
@@ -121,7 +138,7 @@ app.post('/api/parfums', async (req, res) => {
     }
 });
 
-// 3. MODIFICATION (Conserve toutes les fonctionnalités d'origine)
+// 3. MODIFICATION
 app.put('/api/parfums/:id', async (req, res) => {
     const { id } = req.params;
     const { reference, maison, prix, taille, image_url, tete, coeur, fond, dispo, saisons } = req.body;
@@ -192,6 +209,5 @@ app.delete('/api/parfums/:id', async (req, res) => {
     }
 });
 
-// Port dynamique pour Railway (utilise process.env.PORT)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`ScentVault Backend : http://localhost:${PORT}`));
