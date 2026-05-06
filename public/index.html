@@ -10,242 +10,55 @@
     <style>
         [x-cloak] { display: none !important; }
         :root { --gold: #c5a059; --bg-dark: #080808; }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: #e5e5e5;
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: #e5e5e5; 
             overflow-x: hidden;
         }
         .serif { font-family: 'Cormorant Garamond', serif; }
-
-        /* ── Grain ── */
-        .grain-bg {
-            position: fixed; inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.025; pointer-events: none; z-index: 99;
+        .grain-bg { 
+            position: fixed; inset: 0; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); 
+            opacity: 0.02; pointer-events: none; z-index: 99; 
         }
-
-        /* ── Orb ambient ── */
-        .ambient-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            pointer-events: none;
-            z-index: 0;
-            animation: orbDrift 18s ease-in-out infinite alternate;
-        }
-        @keyframes orbDrift {
-            from { transform: translate(0,0) scale(1); }
-            to   { transform: translate(40px, 60px) scale(1.15); }
-        }
-
-        /* ── Card ── */
-        .obsidian-card {
-            background: linear-gradient(145deg, #121212, #0a0a0a);
-            border: 1px solid rgba(255,255,255,0.05);
-            transform-style: preserve-3d;
+        .obsidian-card { 
+            background: linear-gradient(145deg, #121212, #0a0a0a); 
+            border: 1px solid rgba(255, 255, 255, 0.05); 
+            transform-style: preserve-3d; 
         }
         .perspective-2000 { perspective: 2000px; }
         .transform-style-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; position: absolute; inset: 0; }
         .rotate-y-180 { transform: rotateY(180deg); }
-
-        .bottle-depth {
-            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            transform: translateZ(20px);
-        }
-        .group:hover .bottle-depth {
-            transform: translateZ(60px) scale(1.1);
-        }
-
-        /* ── Card entrance animation ── */
-        @keyframes cardIn {
-            from { opacity: 0; transform: translateY(28px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .card-animate {
-            animation: cardIn 0.55s cubic-bezier(0.23, 1, 0.32, 1) both;
-        }
-
-        /* ── Card glow on hover ── */
-        .card-glow::after {
-            content: '';
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            background: linear-gradient(135deg, rgba(197,160,89,0.15), transparent 60%);
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
-            z-index: -1;
-        }
-        .card-glow:hover::after { opacity: 1; }
-        .card-glow {
-            transition: box-shadow 0.5s, border-color 0.5s;
-        }
-        .card-glow:hover {
-            box-shadow: 0 0 40px rgba(197,160,89,0.08), 0 20px 60px rgba(0,0,0,0.6);
-            border-color: rgba(197,160,89,0.18) !important;
-        }
-
-        /* ── Gradients ── */
-        .gold-gradient {
-            background: linear-gradient(to right, #c5a059, #f9e3b4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* ── Logo shimmer ── */
-        @keyframes shimmer {
-            0%   { background-position: -200% center; }
-            100% { background-position: 200% center; }
-        }
-        .logo-shimmer {
-            background: linear-gradient(90deg, #c5a059 20%, #f9e3b4 40%, #c5a059 60%, #a07830 80%);
-            background-size: 200% auto;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: shimmer 6s linear infinite;
-        }
-
-        /* ── Pulse badge ── */
-        @keyframes pulse-ring {
-            0%   { transform: scale(1);   opacity: 0.6; }
-            100% { transform: scale(1.8); opacity: 0; }
-        }
-        .pulse-ring::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            background: var(--gold);
-            animation: pulse-ring 1.8s ease-out infinite;
-        }
-
-        /* ── Action buttons (fav / owned) ── */
-        .action-btn {
-            position: relative;
-            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .action-btn:hover  { transform: scale(1.2); }
-        .action-btn:active { transform: scale(0.9); }
-
-        /* ── Alphabet bar ── */
-        .alpha-bar {
-            position: fixed;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            z-index: 55;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1px;
-            padding: 8px 6px;
-            background: rgba(8,8,8,0.7);
-            backdrop-filter: blur(12px);
-            border-left: 1px solid rgba(255,255,255,0.05);
-            border-radius: 12px 0 0 12px;
-        }
-        .alpha-btn {
-            font-size: 8px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            width: 16px;
-            text-align: center;
-            line-height: 14px;
-            border-radius: 3px;
-            transition: all 0.2s;
-            cursor: pointer;
-            background: transparent;
-            border: none;
-            padding: 0;
-        }
-        .alpha-btn.active {
-            color: #c5a059;
-        }
-        .alpha-btn.active:hover {
-            color: #f9e3b4;
-            background: rgba(197,160,89,0.12);
-            transform: scale(1.25);
-        }
-        .alpha-btn.inactive {
-            color: rgba(255,255,255,0.12);
-            cursor: default;
-        }
-
-        /* ── Owned badge on card ── */
-        .owned-badge {
-            position: absolute;
-            bottom: 12px;
-            left: 12px;
-            font-size: 7px;
-            font-weight: 700;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            padding: 3px 8px;
-            border-radius: 20px;
-            border: 1px solid rgba(134,239,172,0.3);
-            color: rgb(134,239,172);
-            background: rgba(134,239,172,0.08);
-            pointer-events: none;
-        }
-
-        /* ── Scrollbar ── */
+        .bottle-depth { transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); transform: translateZ(20px); }
+        .group:hover .bottle-depth { transform: translateZ(60px) scale(1.1); }
+        .gold-gradient { background: linear-gradient(to right, #c5a059, #f9e3b4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 3px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
-
-        /* ── Separator ── */
-        .alpha-sep {
-            width: 10px;
-            height: 1px;
-            background: rgba(197,160,89,0.25);
-            margin: 3px 0;
-        }
-
-        /* ── Sort select ── */
-        select option { background: #0a0a0a; color: #e5e5e5; }
-
-        /* ── Fade transition for grid ── */
-        .grid-container { position: relative; }
     </style>
 </head>
 <body class="min-h-screen">
     <div class="grain-bg"></div>
 
-    <!-- Ambient orbs -->
-    <div class="ambient-orb" style="width:500px;height:500px;background:rgba(197,160,89,0.03);top:-100px;right:10%"></div>
-    <div class="ambient-orb" style="width:400px;height:400px;background:rgba(120,80,180,0.025);bottom:5%;left:15%;animation-delay:-9s;animation-duration:22s"></div>
-
     <!-- HEADER -->
     <header class="h-24 flex items-center px-6 sm:px-12 sticky top-0 bg-[#080808]/95 backdrop-blur-xl z-[60] justify-between border-b border-white/5">
         <div class="flex items-center gap-4">
+            <!-- BOUTON MENU MOBILE -->
             <button @click="mobileMenu = true" class="lg:hidden text-[#c5a059] p-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
                 </svg>
             </button>
-            <h1 class="serif text-2xl sm:text-3xl italic tracking-widest logo-shimmer uppercase">Kyphi</h1>
+            <h1 class="serif text-2xl sm:text-3xl italic tracking-widest gold-gradient uppercase">Kyphi</h1>
         </div>
-
+        
         <div class="flex items-center gap-2 sm:gap-4">
-            <!-- Compteur -->
-            <span class="hidden sm:block text-[9px] tracking-widest text-white/20 uppercase">
-                <span x-text="filteredParfums.length"></span> / <span x-text="parfums.length"></span>
-            </span>
-
-            <select x-model="sortBy" class="bg-transparent border border-white/10 text-[8px] sm:text-[10px] uppercase tracking-widest px-2 sm:px-4 py-2 outline-none focus:border-[#c5a059] text-white/60 transition-colors">
-                <option value="name_asc">Nom (A→Z)</option>
-                <option value="name_desc">Nom (Z→A)</option>
-                <option value="maison_asc">Maison (A→Z)</option>
-                <option value="maison_desc">Maison (Z→A)</option>
-                <option value="taille_asc">Contenance ↑</option>
-                <option value="taille_desc">Contenance ↓</option>
-                <option value="price_asc">Prix ↑</option>
-                <option value="price_desc">Prix ↓</option>
+            <select x-model="sortBy" class="bg-transparent border border-white/10 text-[8px] sm:text-[10px] uppercase tracking-widest px-2 sm:px-4 py-2 outline-none focus:border-[#c5a059] text-white/60">
+                <option value="name_asc" class="bg-black">Nom (A-Z)</option>
+                <option value="price_asc" class="bg-black">Prix Croissant</option>
+                <option value="price_desc" class="bg-black">Prix Décroissant</option>
             </select>
-
             <button @click="openAddModal()" class="border border-[#c5a059]/30 hover:border-[#c5a059] px-4 sm:px-6 py-2 rounded-full text-[8px] sm:text-[10px] font-bold tracking-[0.2em] uppercase transition-all duration-500 hover:bg-[#c5a059] hover:text-black">
                 + <span class="hidden sm:inline">Ajouter</span>
             </button>
@@ -253,11 +66,12 @@
     </header>
 
     <div class="flex">
-        <!-- SIDEBAR -->
-        <aside
+        <!-- SIDEBAR (DESKTOP + MOBILE OVERLAY) -->
+        <aside 
             :class="mobileMenu ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
             class="fixed lg:sticky top-0 lg:top-24 left-0 w-80 p-10 h-screen lg:h-[calc(100vh-96px)] overflow-y-auto bg-[#080808] border-r border-white/5 custom-scrollbar z-[70] lg:z-50 transition-transform duration-500"
         >
+            <!-- Bouton fermer mobile -->
             <button @click="mobileMenu = false" class="lg:hidden absolute top-6 right-6 text-white/40">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -301,89 +115,39 @@
                 <div class="mt-2 text-[#c5a059] text-[10px] font-mono" x-text="maxPrix + '€'"></div>
             </div>
 
-            <!-- Favoris -->
-            <div class="mb-6">
+            <div class="mb-10">
                 <label class="flex items-center text-xs cursor-pointer group">
                     <input type="checkbox" x-model="onlyFavorites" class="hidden">
                     <span class="w-4 h-4 border border-[#c5a059]/50 mr-3 flex items-center justify-center transition-all" :class="onlyFavorites ? 'bg-[#c5a059]' : ''">
                         <svg x-show="onlyFavorites" class="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M5 13l4 4L19 7"/></svg>
                     </span>
-                    <svg class="w-3.5 h-3.5 mr-2" :class="onlyFavorites ? 'text-[#c5a059] fill-[#c5a059]' : 'text-white/30 fill-none'" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
                     <span class="text-[9px] font-bold uppercase tracking-[0.2em]" :class="onlyFavorites ? 'text-[#c5a059]' : 'text-white/40'">Mes Favoris</span>
                 </label>
             </div>
-
-            <!-- Possédés -->
-            <div class="mb-10">
-                <label class="flex items-center text-xs cursor-pointer group">
-                    <input type="checkbox" x-model="onlyOwned" class="hidden">
-                    <span class="w-4 h-4 border border-green-500/50 mr-3 flex items-center justify-center transition-all" :class="onlyOwned ? 'bg-green-500' : ''">
-                        <svg x-show="onlyOwned" class="w-3 h-3 text-black" fill="currentColor" viewBox="0 0 20 20"><path d="M5 13l4 4L19 7"/></svg>
-                    </span>
-                    <svg class="w-3.5 h-3.5 mr-2" :class="onlyOwned ? 'text-green-400' : 'text-white/30'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2H5zm4 9l2 2 4-4"/>
-                    </svg>
-                    <span class="text-[9px] font-bold uppercase tracking-[0.2em]" :class="onlyOwned ? 'text-green-400' : 'text-white/40'">Mes Possédés</span>
-                </label>
-            </div>
-
             <button @click="resetFilters()" class="text-[9px] uppercase tracking-widest text-white/20 hover:text-[#c5a059] transition-colors">Réinitialiser</button>
         </aside>
 
         <!-- OVERLAY MOBILE -->
         <div x-show="mobileMenu" @click="mobileMenu = false" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] lg:hidden" x-transition.opacity></div>
 
-        <!-- MAIN GRID -->
-        <main class="flex-1 p-4 sm:p-12 pr-8 sm:pr-16">
-            <!-- Empty state -->
-            <div x-show="filteredParfums.length === 0" class="flex flex-col items-center justify-center h-64 text-center">
-                <p class="serif italic text-3xl text-white/10 mb-3">Aucune essence</p>
-                <p class="text-[10px] text-white/20 uppercase tracking-widest">Modifiez vos filtres</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-12 grid-container">
-                <template x-for="(p, index) in filteredParfums" :key="p.id">
-                    <div
-                        :id="`card-${p.id}`"
-                        x-data="{ flipped: false }"
-                        :style="`animation-delay: ${Math.min(index * 0.05, 0.6)}s`"
-                        class="card-animate relative h-[520px] sm:h-[580px] perspective-2000 group cursor-pointer"
-                        @click="flipped = !flipped"
-                    >
+        <main class="flex-1 p-4 sm:p-12">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 sm:gap-12">
+                <template x-for="p in filteredParfums" :key="p.id">
+                    <div x-data="{ flipped: false }" class="relative h-[520px] sm:h-[580px] perspective-2000 group cursor-pointer" @click="flipped = !flipped">
                         <div class="w-full h-full transition-transform duration-1000 transform-style-3d relative" :class="flipped ? 'rotate-y-180' : ''">
-
+                            
                             <!-- FACE AVANT -->
-                            <div class="backface-hidden obsidian-card card-glow p-6 sm:p-8 flex flex-col justify-between z-10 relative overflow-hidden">
-
-                                <!-- Bouton Favori -->
-                                <button @click.stop="toggleFavorite(p)" class="action-btn absolute top-4 right-4 z-20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="p.is_favorite ? 'text-[#c5a059] fill-[#c5a059] drop-shadow-[0_0_6px_rgba(197,160,89,0.7)]' : 'text-white/20 fill-none'" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
-
-                                <!-- Bouton Possédé -->
-                                <button @click.stop="toggleOwned(p)" class="action-btn absolute top-4 right-12 z-20">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" :class="p.is_owned ? 'text-green-400 drop-shadow-[0_0_6px_rgba(134,239,172,0.6)]' : 'text-white/20'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </button>
-
-                                <!-- Badge possédé -->
-                                <div x-show="p.is_owned" class="owned-badge" x-transition>Possédé</div>
-
+                            <div class="backface-hidden obsidian-card p-6 sm:p-8 flex flex-col justify-between z-10">
+                                
                                 <div class="relative h-64 sm:h-72 flex items-center justify-center transform-style-3d">
-                                    <div class="absolute inset-0 bg-[#c5a059]/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                                    <!-- Glow vert si possédé -->
-                                    <div x-show="p.is_owned" class="absolute inset-0 bg-green-500/5 rounded-full blur-[60px]" x-transition></div>
-                                    <img :src="p.image_url || 'https://via.placeholder.com/300x400/111/444?text='" class="max-w-full max-h-full object-contain bottle-depth drop-shadow-2xl">
+                                    <div class="absolute inset-0 bg-[#c5a059]/5 rounded-full blur-[80px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    <img :src="p.image_url || 'https://via.placeholder.com/300x400'" class="max-w-full max-h-full object-contain bottle-depth drop-shadow-2xl">
                                 </div>
-
+                                
                                 <div class="space-y-3 transform-style-3d" style="transform: translateZ(30px)">
                                     <p class="serif italic text-[#c5a059] text-lg sm:text-xl" x-text="p.maison"></p>
                                     <h3 class="text-xl sm:text-2xl font-light tracking-widest text-white uppercase" x-text="p.reference"></h3>
+                                    
                                     <div class="flex justify-between items-center text-[9px] tracking-[0.2em] text-white/40 uppercase">
                                         <span x-text="p.taille ? p.taille + ' ML' : ''"></span>
                                         <span class="serif italic text-2xl sm:text-3xl text-white" x-text="p.prix + '€'"></span>
@@ -410,17 +174,12 @@
                                         <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Points de vente</label>
                                         <p class="text-xs text-white/60 leading-relaxed" x-text="p.dispo"></p>
                                     </div>
-                                    <div x-show="p.familles">
-                                        <label class="text-[8px] text-[#c5a059] uppercase tracking-[0.2em] block mb-1">Famille</label>
-                                        <p class="text-xs text-white/60" x-text="p.familles"></p>
-                                    </div>
                                 </div>
                                 <div class="pt-6 flex justify-between border-t border-white/5">
-                                    <button @click.stop="editParfum(p)" class="text-[9px] uppercase tracking-widest text-[#c5a059] hover:text-white transition-colors">Modifier</button>
-                                    <button @click.stop="deleteParfum(p.id)" class="text-[9px] uppercase tracking-widest text-red-900 hover:text-red-500 transition-colors">Supprimer</button>
+                                    <button @click.stop="editParfum(p)" class="text-[9px] uppercase tracking-widest text-[#c5a059]">Modifier</button>
+                                    <button @click.stop="deleteParfum(p.id)" class="text-[9px] uppercase tracking-widest text-red-900">Supprimer</button>
                                 </div>
                             </div>
-
                         </div>
                     </div>
                 </template>
@@ -428,28 +187,7 @@
         </main>
     </div>
 
-    <!-- ═══════════════════════════════
-         ALPHABET BAR (right side)
-    ════════════════════════════════ -->
-    <nav class="alpha-bar hidden lg:flex" aria-label="Navigation alphabétique">
-        <template x-for="letter in alphabetBar" :key="letter">
-            <template x-if="letter === '—'">
-                <div class="alpha-sep"></div>
-            </template>
-            <template x-if="letter !== '—'">
-                <button
-                    @click="scrollToLetter(letter)"
-                    :class="hasLetter(letter) ? 'alpha-btn active' : 'alpha-btn inactive'"
-                    x-text="letter"
-                    :title="letter"
-                ></button>
-            </template>
-        </template>
-    </nav>
-
-    <!-- ═══════════════════════════════
-         MODALE AJOUT / ÉDITION
-    ════════════════════════════════ -->
+    <!-- MODALE -->
     <div x-show="showModal" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl" x-transition>
         <div @click.away="showModal = false" class="w-full max-w-2xl bg-[#0a0a0a] border border-white/10 p-6 sm:p-12 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
             <h2 class="serif text-2xl sm:text-3xl italic gold-gradient mb-8" x-text="isEditing ? 'Éditer l\'essence' : 'Nouvelle création'"></h2>
@@ -457,55 +195,44 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1">
                         <label class="text-[9px] uppercase tracking-widest text-white/40">Maison</label>
-                        <input type="text" x-model="newP.maison" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                        <input type="text" x-model="newP.maison" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[9px] uppercase tracking-widest text-white/40">Nom</label>
-                        <input type="text" x-model="newP.reference" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                        <input type="text" x-model="newP.reference" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="space-y-1">
                         <label class="text-[9px] uppercase tracking-widest text-white/40">Prix (€)</label>
-                        <input type="number" x-model="newP.prix" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                        <input type="number" x-model="newP.prix" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[9px] uppercase tracking-widest text-white/40">Contenance (ml)</label>
-                        <input type="text" x-model="newP.taille" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                        <input type="text" x-model="newP.taille" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
                     </div>
                     <div class="space-y-1">
                         <label class="text-[9px] uppercase tracking-widest text-white/40">Points de vente</label>
-                        <input type="text" x-model="newP.dispo" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                        <input type="text" x-model="newP.dispo" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059]">
                     </div>
                 </div>
 
                 <div class="space-y-4">
-                    <input type="text" x-model="newP.notes_tete" placeholder="Notes de Tête" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none focus:border-[#c5a059] transition-colors">
-                    <input type="text" x-model="newP.notes_coeur" placeholder="Notes de Cœur" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none focus:border-[#c5a059] transition-colors">
-                    <input type="text" x-model="newP.notes_fond" placeholder="Notes de Fond" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none focus:border-[#c5a059] transition-colors">
+                    <input type="text" x-model="newP.notes_tete" placeholder="Notes de Tête" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
+                    <input type="text" x-model="newP.notes_coeur" placeholder="Notes de Cœur" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
+                    <input type="text" x-model="newP.notes_fond" placeholder="Notes de Fond" class="w-full bg-transparent border-b border-white/5 py-2 text-xs outline-none">
                 </div>
 
-                <input type="url" x-model="newP.image_url" placeholder="URL Image" class="w-full bg-transparent border-b border-white/10 py-2 outline-none focus:border-[#c5a059] transition-colors">
+                <input type="url" x-model="newP.image_url" placeholder="URL Image" class="w-full bg-transparent border-b border-white/10 py-2 outline-none">
 
                 <div class="pt-8 flex justify-end gap-6">
-                    <button type="button" @click="showModal = false" class="text-[10px] uppercase text-white/40 hover:text-white transition-colors">Annuler</button>
+                    <button type="button" @click="showModal = false" class="text-[10px] uppercase text-white/40">Annuler</button>
                     <button type="submit" class="bg-[#c5a059] text-black px-10 py-4 text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white">Enregistrer</button>
                 </div>
             </form>
         </div>
     </div>
-
-    <!-- ═══════════════════════════════
-         SQL pour la table possedes
-         (à exécuter une seule fois)
-         CREATE TABLE IF NOT EXISTS possedes (
-           id INT AUTO_INCREMENT PRIMARY KEY,
-           parfum_id INT NOT NULL,
-           FOREIGN KEY (parfum_id) REFERENCES parfums(id) ON DELETE CASCADE,
-           UNIQUE KEY unique_possede (parfum_id)
-         );
-    ════════════════════════════════ -->
 
     <script>
         function perfumeApp() {
@@ -515,12 +242,10 @@
                 selectedMaisons: [],
                 selectedBoutiques: [],
                 maxPrix: 1000,
-                sortBy: 'maison_asc',
+                sortBy: 'name_asc',
                 showModal: false,
                 isEditing: false,
-                mobileMenu: false,
-                onlyFavorites: false,
-                onlyOwned: false,
+                mobileMenu: false, // Variable pour le menu mobile
                 newP: { maison: '', reference: '', prix: '', taille: '', dispo: '', image_url: '', notes_tete: '', notes_coeur: '', notes_fond: '' },
 
                 async init() { await this.fetchData(); },
@@ -537,67 +262,28 @@
                 get uniqueBoutiques() {
                     let all = [];
                     this.parfums.forEach(p => {
-                        if (p.dispo) p.dispo.split(',').forEach(b => all.push(b.trim()));
+                        if(p.dispo) p.dispo.split(',').forEach(b => all.push(b.trim()));
                     });
                     return [...new Set(all)].filter(Boolean).sort();
                 },
 
                 get filteredParfums() {
-                    const s = this.search.toLowerCase();
-                    const filtered = this.parfums.filter(p => {
-                        const matchSearch = !s || p.reference.toLowerCase().includes(s) || p.maison.toLowerCase().includes(s) || (p.all_notes || '').toLowerCase().includes(s);
-                        const matchFav    = !this.onlyFavorites || p.is_favorite;
-                        const matchOwned  = !this.onlyOwned || p.is_owned;
+                    let result = this.parfums.filter(p => {
+                        const s = this.search.toLowerCase();
+                        const matchSearch = p.reference.toLowerCase().includes(s) || p.maison.toLowerCase().includes(s);
                         const matchMaison = this.selectedMaisons.length === 0 || this.selectedMaisons.includes(p.maison);
                         const matchBoutique = this.selectedBoutiques.length === 0 || this.selectedBoutiques.some(b => p.dispo?.includes(b));
-                        const matchPrix   = p.prix <= this.maxPrix;
-                        return matchSearch && matchFav && matchOwned && matchMaison && matchBoutique && matchPrix;
+                        const matchPrix = p.prix <= this.maxPrix;
+                        return matchSearch && matchMaison && matchBoutique && matchPrix;
                     });
-
-                    return filtered.sort((a, b) => {
-                        switch (this.sortBy) {
-                            case 'name_asc':    return a.reference.localeCompare(b.reference);
-                            case 'name_desc':   return b.reference.localeCompare(a.reference);
-                            case 'maison_asc':  return a.maison.localeCompare(b.maison) || a.reference.localeCompare(b.reference);
-                            case 'maison_desc': return b.maison.localeCompare(a.maison) || a.reference.localeCompare(b.reference);
-                            case 'taille_asc':  return (parseInt(a.taille) || 0) - (parseInt(b.taille) || 0);
-                            case 'taille_desc': return (parseInt(b.taille) || 0) - (parseInt(a.taille) || 0);
-                            case 'price_asc':   return a.prix - b.prix;
-                            case 'price_desc':  return b.prix - a.prix;
-                            default: return 0;
-                        }
+                    return result.sort((a, b) => {
+                        if (this.sortBy === 'name_asc') return a.reference.localeCompare(b.reference);
+                        if (this.sortBy === 'price_asc') return a.prix - b.prix;
+                        if (this.sortBy === 'price_desc') return b.prix - a.prix;
+                        return 0;
                     });
                 },
 
-                /* ── Alphabet bar ── */
-                get alphabetBar() {
-                    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-                    return [...letters, '—', '#'];
-                },
-
-                hasLetter(letter) {
-                    if (letter === '—') return false;
-                    if (letter === '#') {
-                        return this.filteredParfums.some(p => p.maison && !/^[A-Za-z]/.test(p.maison));
-                    }
-                    return this.filteredParfums.some(p => p.maison && p.maison.toUpperCase().startsWith(letter));
-                },
-
-                scrollToLetter(letter) {
-                    if (!this.hasLetter(letter)) return;
-                    let target;
-                    if (letter === '#') {
-                        target = this.filteredParfums.find(p => p.maison && !/^[A-Za-z]/.test(p.maison));
-                    } else {
-                        target = this.filteredParfums.find(p => p.maison && p.maison.toUpperCase().startsWith(letter));
-                    }
-                    if (target) {
-                        const el = document.getElementById(`card-${target.id}`);
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                },
-
-                /* ── Actions ── */
                 openAddModal() {
                     this.isEditing = false;
                     this.newP = { maison: '', reference: '', prix: '', taille: '', dispo: '', image_url: '', notes_tete: '', notes_coeur: '', notes_fond: '' };
@@ -629,29 +315,9 @@
                 },
 
                 async deleteParfum(id) {
-                    if (confirm('Supprimer définitivement ?')) {
+                    if(confirm('Supprimer définitivement ?')) {
                         await fetch(`/api/parfums/${id}`, { method: 'DELETE' });
                         this.fetchData();
-                    }
-                },
-
-                async toggleFavorite(p) {
-                    try {
-                        const res = await fetch(`/api/favoris/${p.id}`, { method: 'POST' });
-                        const data = await res.json();
-                        p.is_favorite = data.is_favorite;
-                    } catch (err) {
-                        console.error('Erreur favoris:', err);
-                    }
-                },
-
-                async toggleOwned(p) {
-                    try {
-                        const res = await fetch(`/api/possedes/${p.id}`, { method: 'POST' });
-                        const data = await res.json();
-                        p.is_owned = data.is_owned;
-                    } catch (err) {
-                        console.error('Erreur possédé:', err);
                     }
                 },
 
@@ -660,9 +326,7 @@
                     this.selectedMaisons = [];
                     this.selectedBoutiques = [];
                     this.maxPrix = 1000;
-                    this.onlyFavorites = false;
-                    this.onlyOwned = false;
-                    this.sortBy = 'maison_asc';
+                    this.sortBy = 'name_asc';
                 }
             }
         }
